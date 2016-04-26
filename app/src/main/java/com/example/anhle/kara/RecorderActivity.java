@@ -20,7 +20,9 @@ package com.example.anhle.kara;
         import android.graphics.PixelFormat;
         import android.hardware.Camera;
         import android.hardware.Camera.Size;
+        import android.media.AudioManager;
         import android.media.CamcorderProfile;
+        import android.media.MediaPlayer;
         import android.media.MediaRecorder;
         import android.os.Build;
         import android.os.Bundle;
@@ -35,6 +37,7 @@ package com.example.anhle.kara;
         import android.view.View;
         import android.widget.Button;
         import android.widget.ImageButton;
+        import android.widget.SeekBar;
         import android.widget.TextView;
 
         import com.example.anhle.kara.DateUtil;
@@ -56,6 +59,8 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
     private Button mButton;
     private TextView mTvTimeCount;
 
+    private ProgressView progressView;
+
     private SurfaceHolder mSurfaceHolder;
     private MediaRecorder mMediaRecorder;
     private Camera mCamera;
@@ -64,13 +69,13 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 
     private boolean mIsRecording = false;
 
-
+    private int positionMusic;
     private Resources mResources;
     private String mPackageName;
 
     private List<Size> mSupportVideoSizes;
 
-
+    MediaPlayer player;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,6 +106,10 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 
         mButton.setBackgroundResource(mResources.getIdentifier("yuninfo_btn_video_start", "drawable", mPackageName));
         mButton.setOnClickListener(mBtnListener);
+
+        progressView = (ProgressView) findViewById(R.id.progressView);
+        progressView.setWidth(getWindowManager().getDefaultDisplay().getWidth());
+        progressView.setPosition(0);
 
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.addCallback(this);
@@ -179,6 +188,10 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
                             mTvTimeCount.setText("00:00");
                             stopRecord();
                         } else {
+                            positionMusic =  msg.arg1;
+                            progressView.setPosition(positionMusic);
+                            progressView.invalidate();
+
                             int seconds = msg.arg1 % 60;
                             int minutes = (msg.arg1 / 60) % 60;
                             mTvTimeCount.setText(String.format("%02d : %02d", minutes, seconds));
@@ -201,11 +214,43 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
             // TODO Auto-generated method stub
             if(mIsRecording) {
                 stopRecord();
+                player.stop();
+                player = null;
             } else {
+                playMusic();
                 startRecord();
             }
         }
     };
+
+    private void playMusic() {
+        try {
+            player = new MediaPlayer();
+
+            player.setDataSource("http://data2.ikara.co/data/karaokes/all/8.mp3");
+            player.prepareAsync();
+            player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+
+                public void onPrepared(MediaPlayer mp) {
+                    final int HOUR = 60*60*1000;
+                    final int MINUTE = 60 * 1000;
+                    final int SECOND = 1000;
+
+                    int durationInMillis = player.getDuration();
+
+                    int durationMint = (durationInMillis%HOUR)/MINUTE;
+                    int durationSec = (durationInMillis%MINUTE)/SECOND;
+
+                    progressView.setDuration(player.getDuration()/1000);
+
+                    player.start();
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private View.OnClickListener mCancelListener = new View.OnClickListener() {
 

@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/yuninfo_video_content_bg" > 
+    android:background="@android:color/darker_gray" >
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -32,9 +32,18 @@
 			android:layout_width="match_parent"
 			android:layout_height="100dp"
 			android:layout_alignParentBottom="true"
-			></RelativeLayout>
+			>
+
+		</RelativeLayout>
     </RelativeLayout>
-	<LinearLayout 
+	<com.example.anhle.kara.ProgressView
+		android:id="@+id/progressView"
+		android:layout_width="match_parent"
+		android:layout_marginLeft="10dp"
+		android:layout_marginRight="10dp"
+		android:layout_above="@+id/yuninfo_ll_recorder_bar_content"
+		android:layout_height="20dp" />
+	<LinearLayout
 	    android:id="@+id/yuninfo_ll_recorder_bar_content"
 	    android:orientation="horizontal"
 	    android:layout_width="match_parent"
