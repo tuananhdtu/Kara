@@ -28,6 +28,6 @@ public class MainActivity extends AppCompatActivity implements MainView{
 
     @Override
     public void onSuccess() {
-        startActivity(new Intent(this, VideoRecord.class));
+        startActivity(new Intent(this, RecorderActivity.class));
     }
 }

@@ -3,18 +3,12 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <SurfaceView
-        android:id="@+id/camerapreview"
+    <VideoView
+        android:id="@+id/videopreview"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="400dip"
         />
 
-    <RelativeLayout
-        android:id="@+id/rlLyric"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_above="@+id/rlRecord">
-    </RelativeLayout>
     <RelativeLayout
         android:id="@+id/rlRecord"
         android:layout_width="match_parent"
@@ -22,11 +16,11 @@
         android:layout_alignParentBottom="true">
 
         <Button
-            android:id="@+id/btnRecord"
+            android:id="@+id/btnPlay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@android:color/holo_red_dark"
-            android:text="Hát"
+            android:text="Xem"
             android:textColor="@android:color/white"
             android:layout_centerInParent="true"/>
     </RelativeLayout>
