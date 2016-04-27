@@ -5,13 +5,12 @@
     android:background="@android:color/darker_gray" >
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/yuninfo_ll_recorder_bar_content"
+        android:layout_height="match_parent"
         android:layout_alignParentTop="true">
-	    <SurfaceView 
+	    <SurfaceView
 	        android:id="@+id/yuninfo_sv_recorder_preview"
 	        android:layout_width="fill_parent"
-	        android:layout_height="@dimen/yuninfo_video_preview_height"
+	        android:layout_height="match_parent"
 	        />
 	    <LinearLayout 
 	        android:orientation="horizontal"
@@ -23,19 +22,20 @@
 	            android:id="@+id/yuninfo_tv_recorder_time_count"
 	            android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
-	            android:textSize="30sp"
-	            android:textColor="@color/yuninfo_white"
+	            android:textSize="20sp"
+	            android:textColor="@android:color/holo_red_light"
 	            android:textStyle="bold"/>
 	    </LinearLayout>
 
-		<RelativeLayout
-			android:layout_width="match_parent"
-			android:layout_height="100dp"
-			android:layout_alignParentBottom="true"
-			>
 
-		</RelativeLayout>
     </RelativeLayout>
+	<com.example.anhle.kara.LyricView
+		android:id="@+id/lyricView"
+		android:layout_width="match_parent"
+		android:layout_height="100dp"
+		android:layout_marginBottom="10dp"
+		android:layout_above="@+id/progressView">
+	</com.example.anhle.kara.LyricView>
 	<com.example.anhle.kara.ProgressView
 		android:id="@+id/progressView"
 		android:layout_width="match_parent"
@@ -59,8 +59,7 @@
 	        android:layout_height="match_parent"
 	        android:minWidth="@dimen/yuninfo_videw_bar_button_minHeight"
 	        android:src="@drawable/yuninfo_ic_video_ok"
-	        android:background="@color/yuninfo_transparent" 
-	        android:contentDescription="@string/yuninfo_view_descreption"/>
+	        android:background="@color/yuninfo_transparent" />
 	    <LinearLayout 
 	        android:orientation="vertical"
 	        android:layout_width="0dip"
@@ -81,7 +80,6 @@
 	        android:layout_height="match_parent"
 	        android:minWidth="@dimen/yuninfo_videw_bar_button_minHeight"
 	        android:src="@drawable/yuninfo_ic_video_cancel"
-	        android:background="@color/yuninfo_transparent" 
-	        android:contentDescription="@string/yuninfo_view_descreption"/>
+	        android:background="@color/yuninfo_transparent" />
 	</LinearLayout>
 </RelativeLayout>

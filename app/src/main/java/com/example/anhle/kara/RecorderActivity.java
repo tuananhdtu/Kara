@@ -6,24 +6,29 @@ package com.example.anhle.kara;
 
         import java.io.File;
         import java.io.IOException;
+        import java.nio.ByteBuffer;
         import java.util.ArrayList;
         import java.util.Collections;
         import java.util.Comparator;
         import java.util.List;
 
         import android.annotation.SuppressLint;
-        import android.app.Activity;
         import android.app.AlertDialog;
+        import android.app.ProgressDialog;
         import android.content.DialogInterface;
         import android.content.Intent;
         import android.content.res.Resources;
         import android.graphics.PixelFormat;
         import android.hardware.Camera;
         import android.hardware.Camera.Size;
-        import android.media.AudioManager;
         import android.media.CamcorderProfile;
+        import android.media.MediaCodec;
+        import android.media.MediaExtractor;
+        import android.media.MediaFormat;
+        import android.media.MediaMuxer;
         import android.media.MediaPlayer;
         import android.media.MediaRecorder;
+        import android.os.AsyncTask;
         import android.os.Build;
         import android.os.Bundle;
         import android.os.Environment;
@@ -31,18 +36,17 @@ package com.example.anhle.kara;
         import android.os.Message;
         import android.util.Log;
         import android.view.KeyEvent;
-        import android.view.Surface;
         import android.view.SurfaceHolder;
         import android.view.SurfaceView;
         import android.view.View;
         import android.widget.Button;
         import android.widget.ImageButton;
-        import android.widget.SeekBar;
         import android.widget.TextView;
+        import android.widget.Toast;
 
-        import com.example.anhle.kara.DateUtil;
-        import com.example.anhle.kara.LogUtil;
-        import com.example.anhle.kara.StringUtil;
+        import org.json.JSONArray;
+        import org.json.JSONException;
+        import org.json.JSONObject;
 
 /**
  * 作用：
@@ -74,8 +78,9 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
     private String mPackageName;
 
     private List<Size> mSupportVideoSizes;
-
+    ArrayList<Lyric> lyrics;
     MediaPlayer player;
+    LyricView mLyricView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,6 +115,7 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
         progressView = (ProgressView) findViewById(R.id.progressView);
         progressView.setWidth(getWindowManager().getDefaultDisplay().getWidth());
         progressView.setPosition(0);
+        new JSONParse().execute();
 
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.addCallback(this);
@@ -123,14 +129,48 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
         }
 
     }
+    private class JSONParse extends AsyncTask<String, String, JSONObject> {
+        private ProgressDialog pDialog;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            pDialog = new ProgressDialog(RecorderActivity.this);
+            pDialog.setMessage("Lấy dữ liệu ...");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(true);
+            pDialog.show();
 
+        }
+
+        @Override
+        protected JSONObject doInBackground(String... args) {
+            JSONParser jParser = new JSONParser();
+            JSONObject json = null;
+            // Getting JSON from URL
+            json = jParser.getJSONFromUrl("http://www.ikara.co/test/getlyric?lyrickey=aglzfmlrYXJhNG1yDAsSBUx5cmljGNdaDA");
+
+            return json;
+        }
+        @Override
+        protected void onPostExecute(JSONObject json) {
+            pDialog.dismiss();
+            try {
+                JSONArray lines = json.getJSONArray("lines");
+                lyrics = LyricUtils.parseLyric(lines);
+                mLyricView = (LyricView) findViewById(R.id.lyricView);
+                mLyricView.setLyric(lyrics);
+            }  catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     private void exit(final int resultCode, final Intent data) {
         if(mIsRecording) {
             new AlertDialog.Builder(RecorderActivity.this)
-                    .setTitle("提示")
-                    .setMessage("正在录制视频，是否退出？")
-                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    .setTitle("Thông báo")
+                    .setMessage("Đang thu âm, bạn có muốn hủy không？")
+                    .setPositiveButton("Có", new DialogInterface.OnClickListener() {
 
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -142,7 +182,7 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
                             finish();
                         }
                     })
-                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    .setNegativeButton("Không", new DialogInterface.OnClickListener() {
 
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -182,7 +222,7 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
         @Override
         public void handleMessage(android.os.Message msg) {
             switch (msg.what) {
-                case Config.YUNINFO_ID_TIME_COUNT:
+                case Config.ID_TIME_COUNT:
                     if(mIsRecording) {
                         if(msg.arg1 > msg.arg2) {
                             mTvTimeCount.setText("00:00");
@@ -195,7 +235,7 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
                             int seconds = msg.arg1 % 60;
                             int minutes = (msg.arg1 / 60) % 60;
                             mTvTimeCount.setText(String.format("%02d : %02d", minutes, seconds));
-                            Message msg2 = mHandler.obtainMessage(Config.YUNINFO_ID_TIME_COUNT, msg.arg1 + 1, msg.arg2);
+                            Message msg2 = mHandler.obtainMessage(Config.ID_TIME_COUNT, msg.arg1 + 1, msg.arg2);
                             mHandler.sendMessageDelayed(msg2, 1000);
                         }
                     }
@@ -213,12 +253,12 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
         public void onClick(View v) {
             // TODO Auto-generated method stub
             if(mIsRecording) {
+                mLyricView.stop();
                 stopRecord();
                 player.stop();
                 player = null;
             } else {
                 playMusic();
-                startRecord();
             }
         }
     };
@@ -244,6 +284,8 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
                     progressView.setDuration(player.getDuration()/1000);
 
                     player.start();
+                    mLyricView.play();
+                    startRecord();
                 }
             });
         } catch (Exception e) {
@@ -266,7 +308,7 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
         public void onClick(View v) {
             Intent intent = new Intent(RecorderActivity.this, VideoPlayer.class);
             if(mOutputFile != null && !StringUtil.isEmpty(mOutputFile.getAbsolutePath())) {
-                intent.putExtra(Config.YUNINFO_RESULT_DATA, mOutputFile.getPath());
+                intent.putExtra(Config.RESULT_DATA, mOutputFile.getAbsolutePath());
             }
             startActivity(intent);
             finish();
@@ -279,7 +321,6 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
         try {
             this.mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_FRONT);
             Camera.Parameters parameters = mCamera.getParameters();
-            System.out.println(parameters.flatten());
             parameters.set("orientation", "portrait");
             mCamera.setParameters(parameters);
             mCamera.lock();
@@ -494,26 +535,18 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 
     private void startRecord() {
         try {
-            // initialize video camera
             if (initVideoRecorder()) {
-                // Camera is available and unlocked, MediaRecorder is prepared,
-                // now you can start recording
                 mMediaRecorder.start();
                 mButton.setBackgroundResource(mResources.getIdentifier("yuninfo_btn_video_stop", "drawable", mPackageName));
-//				mButton.setEnabled(false);
             } else {
-                // prepare didn't work, release the camera
                 releaseMediaRecorder();
-                // inform user
                 mButton.setBackgroundResource(mResources.getIdentifier("yuninfo_btn_video_start", "drawable", mPackageName));
             }
             mTvTimeCount.setVisibility(View.VISIBLE);
-            mTvTimeCount.setText("00:0" + (Config.YUNINFO_MAX_VIDEO_DURATION / 1000));
-            Message msg = mHandler.obtainMessage(Config.YUNINFO_ID_TIME_COUNT, 1, Config.YUNINFO_MAX_VIDEO_DURATION / 1000);
+            Message msg = mHandler.obtainMessage(Config.ID_TIME_COUNT, 1, Config.MAX_VIDEO_DURATION / 1000);
             mHandler.sendMessage(msg);
             mIsRecording = true;
         } catch (Exception e) {
-            showShortToast("该操作系统不支持此功能");
             e.printStackTrace();
             exit(RESULT_ERROR, null);
         }
@@ -566,6 +599,41 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
         }
     }
 
+    private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio = (double) h / w;
+
+        if (sizes == null)
+            return null;
+
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+
+        int targetHeight = h;
+
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.height / size.width;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE)
+                continue;
+
+            if (Math.abs(size.height - targetHeight) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - targetHeight);
+            }
+        }
+
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - targetHeight) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - targetHeight);
+                }
+            }
+        }
+
+        return optimalSize;
+    }
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width,
                                int height) {
@@ -601,4 +669,5 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
             return rhs.width - lhs.width;
         }
     }
+
 }

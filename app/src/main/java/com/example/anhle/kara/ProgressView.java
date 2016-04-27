@@ -15,19 +15,26 @@ public class ProgressView extends View {
 
     Paint paint;
     Paint paintCircle;
+
+    Paint paintTime;
+
     float width;
     float position;
-    float duration;
+    float duration = 1;
 
     public ProgressView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setWillNotDraw(false);
         //set màu và độ rộng đường line
         paint = new Paint();
         paint.setColor(Color.WHITE);
         paint.setStrokeWidth(5);
 
         paintCircle = new Paint();
+        paintCircle.setColor(Color.RED);
+
+        paintTime = new Paint();
+        paintTime.setColor(Color.RED);
+        paintTime.setStrokeWidth(5);
     }
 
     @Override
@@ -37,8 +44,10 @@ public class ProgressView extends View {
         //vẽ đường line
         canvas.drawLine(20, 20, width, 20, paint);
 
+        //vex duong da hinh tron da chay qua
+        canvas.drawLine(20, 20, position, 20, paintTime);
+
         //Vẽ hình tròn
-        paintCircle.setColor(Color.MAGENTA);
         float xPosition=position;
         float yPosition=20;
         int size = 10;

@@ -6,7 +6,16 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
-public class MainActivity extends AppCompatActivity implements MainView{
+import org.apache.http.NameValuePair;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class MainActivity extends BaseActivity implements MainView{
 
     private MainPresenter presenter;
 
@@ -24,6 +33,8 @@ public class MainActivity extends AppCompatActivity implements MainView{
                 presenter.showVideoRecord();
             }
         });
+
+
     }
 
     @Override

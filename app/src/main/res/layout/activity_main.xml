@@ -7,18 +7,21 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:gravity="center"
+    android:background="@android:color/white"
     tools:context="com.example.anhle.kara.MainActivity">
 
     <ImageView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:background="@drawable/karaoke"
+        android:scaleType="fitCenter"/>
     <Button
         android:id="@+id/btnRecordKara"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Thu hình"
+        android:text="Cùng hát nào..."
         android:layout_marginTop="50dp"
-        android:background="@android:color/holo_blue_light"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/button"
         android:textColor="@android:color/white"/>
 </RelativeLayout>

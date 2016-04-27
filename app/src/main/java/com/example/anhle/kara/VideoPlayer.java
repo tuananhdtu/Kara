@@ -22,7 +22,7 @@ public class VideoPlayer extends Activity  {
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         setContentView(R.layout.video_record);
 
-        path = getIntent().getExtras().getString(Config.YUNINFO_RESULT_DATA);
+        path = getIntent().getExtras().getString(Config.RESULT_DATA);
 
 
         videoView = (VideoView) findViewById(R.id.videopreview);
