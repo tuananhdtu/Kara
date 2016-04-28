@@ -44,6 +44,12 @@ package com.example.anhle.kara;
         import android.widget.TextView;
         import android.widget.Toast;
 
+        import com.googlecode.javacv.FFmpegFrameGrabber;
+        import com.googlecode.javacv.FFmpegFrameRecorder;
+        import com.googlecode.javacv.Frame;
+        import com.googlecode.javacv.FrameGrabber;
+        import com.googlecode.javacv.FrameRecorder;
+
         import org.json.JSONArray;
         import org.json.JSONException;
         import org.json.JSONObject;
@@ -87,7 +93,6 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 
         mResources = getResources();
         mPackageName = getPackageName();
-
 
         int layoutId = mResources.getIdentifier("yuninfo_activity_video_recorder", "layout", mPackageName);
         setContentView(layoutId);
@@ -163,6 +168,15 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
                 e.printStackTrace();
             }
         }
+    }
+    static {
+        System.loadLibrary("avutil-54");
+        System.loadLibrary("avcodec-56");
+        System.loadLibrary("avformat-56");
+        System.loadLibrary("swscale-3");
+        System.loadLibrary("avfilter-5");
+        System.loadLibrary("swresample-1");
+        System.loadLibrary("avdevice");
     }
 
     private void exit(final int resultCode, final Intent data) {
@@ -306,9 +320,47 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 
         @Override
         public void onClick(View v) {
+            File f = null;
+            try {
+                FrameGrabber grabber1 = new FFmpegFrameGrabber(mOutputFile.getAbsolutePath());
+                FrameGrabber grabber2 = new FFmpegFrameGrabber("http://data2.ikara.co/data/karaokes/all/8.mp3");
+                grabber1.start();
+                grabber2.start();
+                String baseDir = Environment.getExternalStorageDirectory().getAbsolutePath();
+                String fileName = "finalvideo.mp4";
+
+                f = new File(baseDir + File.separator + fileName);
+                FrameRecorder recorder = new FFmpegFrameRecorder(f,
+                        grabber1.getImageWidth(), grabber1.getImageHeight(), 2);
+                recorder.setFormat("mp4");
+                recorder.setVideoQuality(1);
+                recorder.setFrameRate(grabber1.getFrameRate());
+                recorder.setSampleRate(grabber2.getSampleRate());
+                recorder.start();
+                Frame frame1, frame2 = null;
+                long timestamp = -2;
+                int count = 0;
+                boolean isFirstTime = false;
+                boolean isFirstCheck = true;
+                while ((frame1 = grabber1.grabFrame()) != null) {
+                    //frame1 = grabber1.grabFrame();
+                    frame2 = grabber2.grabFrame();
+                    recorder.record(frame1);
+                    recorder.record(frame2);
+
+                }
+                recorder.stop();
+                grabber1.stop();
+                grabber2.stop();
+            } catch (FrameGrabber.Exception e) {
+                e.printStackTrace();
+            } catch (Exception e1) {
+
+            }
+
             Intent intent = new Intent(RecorderActivity.this, VideoPlayer.class);
-            if(mOutputFile != null && !StringUtil.isEmpty(mOutputFile.getAbsolutePath())) {
-                intent.putExtra(Config.RESULT_DATA, mOutputFile.getAbsolutePath());
+            if (mOutputFile != null && !StringUtil.isEmpty(mOutputFile.getAbsolutePath())) {
+                intent.putExtra(Config.RESULT_DATA, f);
             }
             startActivity(intent);
             finish();

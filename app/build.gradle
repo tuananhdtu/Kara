@@ -17,12 +17,63 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    sourceSets
+            {
+                main
+                        {
+
+                            jniLibs.srcDirs = ['src/main/jnilibs']
+
+                        }
+            }
+                productFlavors
+            {
+                x86
+                        {
+                            ndk
+                                    {
+                                        abiFilter "x86"
+                                    }
+                        }
+
+                armv7a
+                        {
+                            ndk
+                                    {
+                                        abiFilter "armeabi-v7a"
+                                    }
+                        }
+                arm {
+                    //flavorDimension "abi"
+                    ndk
+                            {
+                                abiFilter "armeabi"
+                                versionCode = 1;
+                            }
+                }
+            }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.google.android.gms:play-services-appindexing:8.1.0'
     compile 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
+    compile files('libs/ffmpeg.jar')
+    compile files('libs/javacpp.jar')
+    compile files('libs/javacv.jar')
+    compile files('libs/opencv.jar')
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile fileTree(dir: "$buildDir/native-libs", include: 'native-libs.jar')
 }
+task nativeLibsToJar(type: Jar, description: 'create a jar archive of the native libs') {
+    destinationDir file("$buildDir/native-libs")
+    baseName 'native-libs'
+    from fileTree(dir: 'src/main/jnilibs', include: '**/*.so')
+    into 'lib/'
+}
+
+tasks.withType(JavaCompile)
+        {
+            compileTask -> compileTask.dependsOn(nativeLibsToJar)
+        }

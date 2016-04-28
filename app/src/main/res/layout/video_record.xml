@@ -6,7 +6,7 @@
     <VideoView
         android:id="@+id/videopreview"
         android:layout_width="fill_parent"
-        android:layout_height="400dip"
+        android:layout_height="match_parent"
         />
 
     <RelativeLayout
@@ -19,7 +19,7 @@
             android:id="@+id/btnPlay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@android:color/holo_red_dark"
+            android:background="@drawable/button"
             android:text="Xem"
             android:textColor="@android:color/white"
             android:layout_centerInParent="true"/>
