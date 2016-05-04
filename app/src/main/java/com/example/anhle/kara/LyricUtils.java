@@ -77,4 +77,42 @@ public class LyricUtils {
         return found;
     }
 
+    public static int getSentenceIndexChild(List<Word> words, long ts, int index, int offset) {
+        if (words == null || ts < 0 || index < -1)
+            return -1;
+        List<Word> list = words;
+
+        if (index >= list.size())
+            index = list.size() - 1;
+        if (index == -1)
+            index = 0;
+
+        int found = -2;
+
+        if (words.get(index).getStartTime() + offset > ts) {
+            for (int i = index; i > -1; --i) {
+                if (words.get(index).getStartTime() + offset <= ts) {
+                    found = i;
+                    break;
+                }
+            }
+            // First line of lyric is bigger than starting time.
+            if (found == -2)
+                found = -1;
+        } else {
+            for (int i = index; i < list.size() - 1; ++i) {
+                //Log.d(TAG, String.format("ts: %d, offset: %d, curr_ts: %d, next_ts: %d", ts, offset, list.get(i).getFromTime(), list.get(i + 1).getFromTime()));
+                if (words.get(i + 1).getStartTime() + offset > ts) {
+                    found = i;
+                    break;
+                }
+            }
+            // If not found, return last mLyricIndex
+            if (found == -2) {
+                found = list.size() - 1;
+            }
+        }
+
+        return found;
+    }
 }

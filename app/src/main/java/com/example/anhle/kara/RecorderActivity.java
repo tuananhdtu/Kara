@@ -3,7 +3,6 @@ package com.example.anhle.kara;
 /**
  * Created by anhle on 4/26/16.
  */
-
         import java.io.File;
         import java.io.IOException;
         import java.nio.ByteBuffer;
@@ -18,6 +17,7 @@ package com.example.anhle.kara;
         import android.content.DialogInterface;
         import android.content.Intent;
         import android.content.res.Resources;
+        import android.graphics.Color;
         import android.graphics.PixelFormat;
         import android.hardware.Camera;
         import android.hardware.Camera.Size;
@@ -34,6 +34,9 @@ package com.example.anhle.kara;
         import android.os.Environment;
         import android.os.Handler;
         import android.os.Message;
+        import android.text.Spannable;
+        import android.text.SpannableString;
+        import android.text.style.ForegroundColorSpan;
         import android.util.Log;
         import android.view.KeyEvent;
         import android.view.SurfaceHolder;
@@ -43,12 +46,6 @@ package com.example.anhle.kara;
         import android.widget.ImageButton;
         import android.widget.TextView;
         import android.widget.Toast;
-
-        import com.googlecode.javacv.FFmpegFrameGrabber;
-        import com.googlecode.javacv.FFmpegFrameRecorder;
-        import com.googlecode.javacv.Frame;
-        import com.googlecode.javacv.FrameGrabber;
-        import com.googlecode.javacv.FrameRecorder;
 
         import org.json.JSONArray;
         import org.json.JSONException;
@@ -87,6 +84,7 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
     ArrayList<Lyric> lyrics;
     MediaPlayer player;
     LyricView mLyricView;
+    TextView mLyricCurrentView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,7 +98,7 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
         initView();
     }
 
-    @SuppressWarnings("deprecation")
+     @SuppressWarnings("deprecation")
     private void initView() {
 
         mSurfaceView = (SurfaceView) findViewById(mResources.getIdentifier("yuninfo_sv_recorder_preview", "id", mPackageName));
@@ -120,6 +118,9 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
         progressView = (ProgressView) findViewById(R.id.progressView);
         progressView.setWidth(getWindowManager().getDefaultDisplay().getWidth());
         progressView.setPosition(0);
+        mLyricView = (LyricView) findViewById(R.id.lyricView);
+         mLyricCurrentView = (TextView) findViewById(R.id.lyricCurrentView);
+
         new JSONParse().execute();
 
         mSurfaceHolder = mSurfaceView.getHolder();
@@ -162,21 +163,11 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
             try {
                 JSONArray lines = json.getJSONArray("lines");
                 lyrics = LyricUtils.parseLyric(lines);
-                mLyricView = (LyricView) findViewById(R.id.lyricView);
-                mLyricView.setLyric(lyrics);
+
             }  catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-    }
-    static {
-        System.loadLibrary("avutil-54");
-        System.loadLibrary("avcodec-56");
-        System.loadLibrary("avformat-56");
-        System.loadLibrary("swscale-3");
-        System.loadLibrary("avfilter-5");
-        System.loadLibrary("swresample-1");
-        System.loadLibrary("avdevice");
     }
 
     private void exit(final int resultCode, final Intent data) {
@@ -276,7 +267,12 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
             }
         }
     };
-
+    Handler handler ;
+    private long startTime, currentTime, finishedTime = 0L;
+    private int duration = 22000 / 4;
+    private int endTime = 0;
+    private int mLyricIndex = 0;
+    private int mLyricIndexChild = 0;
     private void playMusic() {
         try {
             player = new MediaPlayer();
@@ -292,14 +288,43 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 
                     int durationInMillis = player.getDuration();
 
-                    int durationMint = (durationInMillis%HOUR)/MINUTE;
-                    int durationSec = (durationInMillis%MINUTE)/SECOND;
+                    int durationMint = player.getDuration()/1000;
 
                     progressView.setDuration(player.getDuration()/1000);
 
                     player.start();
+                    mLyricView.setLyric(lyrics);
                     mLyricView.play();
                     startRecord();
+
+                    handler = new Handler();
+                    startTime = Long.valueOf(System.currentTimeMillis());
+                    currentTime = startTime;
+
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            currentTime = Long.valueOf(System.currentTimeMillis());
+                            finishedTime = Long.valueOf(currentTime)
+                                    - Long.valueOf(startTime);
+                            mLyricIndex = LyricUtils.getSentenceIndex(lyrics, finishedTime, mLyricIndex, 0);
+                            if (finishedTime >= duration + 30) {
+                                Toast.makeText(RecorderActivity.this, "Move to next screen",
+                                        Toast.LENGTH_LONG).show();
+                            } else {
+                                endTime = (int) (finishedTime / 250);// divide this by
+                                // 1000,500,250,125
+                                Spannable spannableString = new SpannableString(lyrics.get(mLyricIndex+1).showWord());
+                                spannableString.setSpan(new ForegroundColorSpan(
+                                                Color.YELLOW), 0, endTime,
+                                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                                mLyricCurrentView.setText(spannableString);
+                                handler.postDelayed(this, 10);
+                            }
+                        }
+                    }, 10);
                 }
             });
         } catch (Exception e) {
@@ -320,47 +345,9 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 
         @Override
         public void onClick(View v) {
-            File f = null;
-            try {
-                FrameGrabber grabber1 = new FFmpegFrameGrabber(mOutputFile.getAbsolutePath());
-                FrameGrabber grabber2 = new FFmpegFrameGrabber("http://data2.ikara.co/data/karaokes/all/8.mp3");
-                grabber1.start();
-                grabber2.start();
-                String baseDir = Environment.getExternalStorageDirectory().getAbsolutePath();
-                String fileName = "finalvideo.mp4";
-
-                f = new File(baseDir + File.separator + fileName);
-                FrameRecorder recorder = new FFmpegFrameRecorder(f,
-                        grabber1.getImageWidth(), grabber1.getImageHeight(), 2);
-                recorder.setFormat("mp4");
-                recorder.setVideoQuality(1);
-                recorder.setFrameRate(grabber1.getFrameRate());
-                recorder.setSampleRate(grabber2.getSampleRate());
-                recorder.start();
-                Frame frame1, frame2 = null;
-                long timestamp = -2;
-                int count = 0;
-                boolean isFirstTime = false;
-                boolean isFirstCheck = true;
-                while ((frame1 = grabber1.grabFrame()) != null) {
-                    //frame1 = grabber1.grabFrame();
-                    frame2 = grabber2.grabFrame();
-                    recorder.record(frame1);
-                    recorder.record(frame2);
-
-                }
-                recorder.stop();
-                grabber1.stop();
-                grabber2.stop();
-            } catch (FrameGrabber.Exception e) {
-                e.printStackTrace();
-            } catch (Exception e1) {
-
-            }
-
             Intent intent = new Intent(RecorderActivity.this, VideoPlayer.class);
             if (mOutputFile != null && !StringUtil.isEmpty(mOutputFile.getAbsolutePath())) {
-                intent.putExtra(Config.RESULT_DATA, f);
+                intent.putExtra(Config.RESULT_DATA, mOutputFile.getAbsolutePath());
             }
             startActivity(intent);
             finish();
@@ -721,5 +708,6 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
             return rhs.width - lhs.width;
         }
     }
+
 
 }

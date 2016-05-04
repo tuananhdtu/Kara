@@ -56,7 +56,6 @@ public class LyricView extends TextView implements Runnable {
         int backgroundColor = Color.TRANSPARENT;
         int highlightColor = Color.RED;
         int normalColor = Color.WHITE;
-
         setBackgroundColor(backgroundColor);
 
         // Non-highlight part
@@ -88,11 +87,11 @@ public class LyricView extends TextView implements Runnable {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(final Canvas canvas) {
         super.onDraw(canvas);
         if (lyric == null)
             return;
-        List<Lyric> sentenceList = lyric;
+        final List<Lyric> sentenceList = lyric;
         if (sentenceList == null || sentenceList.isEmpty() || mLyricIndex == -2) {
             return;
         }
@@ -101,7 +100,7 @@ public class LyricView extends TextView implements Runnable {
 
         if (mLyricIndex > -1) {
             currY = mMiddleY + DY * drawText(
-                    canvas, mCurrentPaint, sentenceList.get(mLyricIndex).showWord(), mMiddleY);
+                    canvas, mPaint, sentenceList.get(mLyricIndex).showWord(), mMiddleY);
         } else {
             currY = mMiddleY + DY;
         }

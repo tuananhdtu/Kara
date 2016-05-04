@@ -1,6 +1,10 @@
 package com.example.anhle.kara;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -30,7 +34,20 @@ public class MainActivity extends BaseActivity implements MainView{
         btnRecordKara.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                presenter.showVideoRecord();
+                if (isNetworkAvailable(MainActivity.this)) {
+                    presenter.showVideoRecord();
+                }else{
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Thông báo")
+                            .setMessage("Yêu cầu có kết nối mạng.")
+                            .setPositiveButton("Đồng ý", new DialogInterface.OnClickListener() {
+
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
+                                }
+                            }).show();
+                }
             }
         });
 
@@ -40,5 +57,10 @@ public class MainActivity extends BaseActivity implements MainView{
     @Override
     public void onSuccess() {
         startActivity(new Intent(this, RecorderActivity.class));
+    }
+
+    public boolean isNetworkAvailable(final Context context) {
+        final ConnectivityManager connectivityManager = ((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE));
+        return connectivityManager.getActiveNetworkInfo() != null && connectivityManager.getActiveNetworkInfo().isConnected();
     }
 }

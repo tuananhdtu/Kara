@@ -55,7 +55,7 @@ public class ProgressView extends View {
     }
 
     public void setWidth( float width){
-        this.width = width; //độ dài đường line
+        this.width = width - 40; //độ dài đường line
     }
 
     public void setDuration( float duration){

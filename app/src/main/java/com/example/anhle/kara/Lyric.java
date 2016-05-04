@@ -21,4 +21,5 @@ public class Lyric {
         }
         return word;
     }
+
 }

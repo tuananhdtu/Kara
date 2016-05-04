@@ -17,41 +17,34 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    sourceSets
-            {
-                main
-                        {
-
-                            jniLibs.srcDirs = ['src/main/jnilibs']
-
-                        }
-            }
-                productFlavors
-            {
-                x86
-                        {
-                            ndk
-                                    {
-                                        abiFilter "x86"
-                                    }
-                        }
-
-                armv7a
-                        {
-                            ndk
-                                    {
-                                        abiFilter "armeabi-v7a"
-                                    }
-                        }
-                arm {
-                    //flavorDimension "abi"
-                    ndk
-                            {
-                                abiFilter "armeabi"
-                                versionCode = 1;
-                            }
-                }
-            }
+//    sourceSets.main {
+//        jni.srcDirs = [] // This prevents the auto generation of Android.mk
+//        jniLibs.srcDir 'src/main/jniLibs' // This is not necessary unless you have precompiled libraries in your project.
+//    }
+//
+//    packagingOptions {
+//        exclude 'META-INF/DEPENDENCIES.txt'
+//        exclude 'META-INF/LICENSE.txt'
+//        exclude 'META-INF/NOTICE.txt'
+//        exclude 'META-INF/NOTICE'
+//        exclude 'META-INF/LICENSE'
+//        exclude 'META-INF/DEPENDENCIES'
+//        exclude 'META-INF/notice.txt'
+//        exclude 'META-INF/license.txt'
+//        exclude 'META-INF/dependencies.txt'
+//        exclude 'META-INF/LGPL2.1'
+//    }
+//    task ndkBuild(type: Exec, description: 'Compile JNI source via NDK') {
+//        commandLine "/Users/anhle/Library/Android/sdk/ndk-bundle/ndk-build",
+//                'NDK_PROJECT_PATH=build/intermediates/ndk',
+//                'NDK_LIBS_OUT=src/main/jniLibs',
+//                'APP_BUILD_SCRIPT=src/main/jniLibs/Android.mk',
+//                'NDK_APPLICATION_MK=src/main/jniLibs/Application.mk'
+//    }
+//
+//    tasks.withType(JavaCompile) {
+//        compileTask -> compileTask.dependsOn ndkBuild
+//    }
 }
 
 dependencies {
@@ -59,21 +52,4 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.google.android.gms:play-services-appindexing:8.1.0'
     compile 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
-    compile files('libs/ffmpeg.jar')
-    compile files('libs/javacpp.jar')
-    compile files('libs/javacv.jar')
-    compile files('libs/opencv.jar')
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile fileTree(dir: "$buildDir/native-libs", include: 'native-libs.jar')
 }
-task nativeLibsToJar(type: Jar, description: 'create a jar archive of the native libs') {
-    destinationDir file("$buildDir/native-libs")
-    baseName 'native-libs'
-    from fileTree(dir: 'src/main/jnilibs', include: '**/*.so')
-    into 'lib/'
-}
-
-tasks.withType(JavaCompile)
-        {
-            compileTask -> compileTask.dependsOn(nativeLibsToJar)
-        }
